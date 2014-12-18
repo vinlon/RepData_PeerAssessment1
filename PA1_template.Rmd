@@ -99,11 +99,14 @@ sum(is.na(NewActivity$steps))
 sum(is.na(NewActivity$steps))
 ```
 - Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
-```{r Task3, fig.width=5,fig.height=5}
+```{r Task3, fig.width=8,fig.height=4}
 StepsPerDay_New<-aggregate(NewActivity$steps,by = list(Date=NewActivity$date),FUN = sum,na.rm=T)
 DailySteps_New<-StepsPerDay_New$x
-hist(DailySteps_New,)
-
+opar<-par()
+par(mfcol = c(1,2))
+hist(DailySteps,20,col = "grey",ylim = c(0,15))
+hist(DailySteps_New,20,col="blue",ylim =c(0,15))
+par<-opar
 options(digits = 2)
 mean(DailySteps_New)
 median(DailySteps_New)
