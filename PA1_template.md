@@ -23,7 +23,7 @@ if(!exists(csvfile)){
      unzip(zipfile = "activity.zip")   
 }
 ```
-- Read the data to the object Activity
+- Read the data to the object Activity  
   before this ,roughly review the data and found there is column headers and has NA value in the "steps" column
 
 ```r
@@ -37,24 +37,11 @@ str(Activity)
 ##  $ date    : Factor w/ 61 levels "2012-10-01","2012-10-02",..: 1 1 1 1 1 1 1 1 1 1 ...
 ##  $ interval: int  0 5 10 15 20 25 30 35 40 45 ...
 ```
-- Transform date column to Data format
+- Transform date column to Date format
 
 ```r
 library(lubridate)
 attach(Activity)
-```
-
-```
-## The following object is masked from AverageIntervalStepsWeekends:
-## 
-##     interval
-## 
-## The following objects are masked from NewActivity:
-## 
-##     date, interval, steps
-```
-
-```r
 date<<-ymd(as.character(Activity$date))
 Activity$time<-hm(paste(floor(interval/100),interval%%100,sep=" "))
 detach(Activity)
@@ -93,22 +80,25 @@ unique(Activity$time)
 ```
 
 ## Task1, What is mean total number of steps taken per day?
-  - Ignore the missing values in the dataset.
+  - Ignore the missing values in the dataset. (If the data of a day is all missed, this day will be removed)
   - Make a histogram of the total number of steps taken each day
   - Calculate and report the mean and median total number of steps taken per day
 
 ```r
-StepsPerDay<-aggregate(Activity$steps,by = list(Date=Activity$date),FUN = sum,na.rm=T)
+StepsPerDay<-aggregate(steps~date,data=Activity,sum,na.rm=T)
+# Notice result is different with the follow statement. 
+#the day with all NA values are kept with 0 steps. 
+#StepsPerDay<-aggregate(Activity$steps, by = list(date=Activity$date), FUN=sum, na.rm=T)
 dim(StepsPerDay)
 ```
 
 ```
-## [1] 61  2
+## [1] 53  2
 ```
 
 ```r
-DailySteps<-StepsPerDay$x
-hist(DailySteps,)
+DailySteps<-StepsPerDay$steps
+hist(x = DailySteps,breaks = 20)
 ```
 
 ![plot of chunk Task1](figure/Task1-1.png) 
@@ -118,14 +108,14 @@ options(digits = 2)
 meanSteps<-mean(DailySteps)
 medianSteps<-median(DailySteps)
 ```
-The mean of the total number of steps taken per day is : 9354.23, while the median is : 10395. 
+The mean of the total number of steps taken per day is : 1.08 &times; 10<sup>4</sup>, while the median is : 10765. 
 
 ## Task2, What is the average daily activity pattern?
 - Make a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
 - Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
 
 ```r
-AverageIntervalSteps<-aggregate(Activity$steps,by=list(interval=Activity$interval),FUN= mean, na.rm=T)
+AverageIntervalSteps<-aggregate(steps~interval, data=Activity, mean, na.rm=T)
 dim(AverageIntervalSteps)
 ```
 
@@ -135,7 +125,7 @@ dim(AverageIntervalSteps)
 
 ```r
 with(AverageIntervalSteps,{
-        plot(interval,x,
+        plot(interval,steps,
              type="l",
              main = "Average number of steps taken",
              xlab="Interval, Time(hmm/hhmm)",
@@ -147,7 +137,7 @@ with(AverageIntervalSteps,{
 ![plot of chunk Task2](figure/Task2-1.png) 
 
 ```r
-maxInterval<-AverageIntervalSteps[AverageIntervalSteps$x==max(AverageIntervalSteps$x),"interval"]
+maxInterval<-AverageIntervalSteps[which.max(AverageIntervalSteps$steps),"interval"]
 start<-paste(floor(maxInterval/100),maxInterval%%100,sep = ":")
 end<-paste(floor(maxInterval/100),maxInterval%%100+5,sep = ":")
 ```
@@ -181,29 +171,20 @@ sum(is.na(Activity$steps))
 
 ```r
 NewActivity<-Activity
-attach(NewActivity)
+
+for(i in 1:length(NewActivity$steps)){
+        if(is.na(NewActivity$steps[i])){
+                NewActivity$steps[i]<-AverageIntervalSteps$x[AverageIntervalSteps$interval==NewActivity$interval[i]]
+        }
+}
 ```
 
 ```
-## The following object is masked from AverageIntervalStepsWeekends:
-## 
-##     interval
-## 
-## The following objects are masked from NewActivity (pos = 5):
-## 
-##     date, interval, steps, time
+## Error in NewActivity$steps[i] <- AverageIntervalSteps$x[AverageIntervalSteps$interval == : 更换参数长度为零
 ```
 
 ```r
-intervalMean<-aggregate(steps,by= list(interval=interval), FUN = mean, na.rm=T)
-for(i in 1:length(steps)){
-        if(is.na(steps[i])){
-                NewActivity$steps[i]<-intervalMean$x[intervalMean$interval==interval[i]]
-        }
-}
-detach(NewActivity)
-
-sum(is.na(Activity$steps))
+sum(is.na(NewActivity$steps))
 ```
 
 ```
@@ -215,13 +196,46 @@ sum(is.na(NewActivity$steps))
 ```
 
 ```
-## [1] 0
+## [1] 2304
 ```
 - Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
 
 ```r
+StepsPerDay_New<-aggregate(steps~date,data=NewActivity,sum,na.rm=T)
+DailySteps_New<-StepsPerDay_New$steps
+opar<-par()
+par(mfcol = c(1,2))
+hist(DailySteps,20,col = "grey",ylim = c(0,15))
+hist(DailySteps_New,20,col="blue",ylim =c(0,15))
+```
+
+![plot of chunk Task3](figure/Task3-1.png) 
+
+```r
+par<-opar
+options(digits = 2)
+mean(DailySteps_New)
+```
+
+```
+## [1] 10766
+```
+
+```r
+median(DailySteps_New)
+```
+
+```
+## [1] 10765
+```
+Since in the original data, if the data of a day is all NA, the day will be removed from the dataset. 
+So In the imputing histgram, the fix data with average interval steps are added into the most popular bucket.  
+  
+Keep the wrong plot I had made (which seems interesting ), be carefull next time.
+
+```r
 with(AverageIntervalSteps,{
-        plot(interval,x,
+        plot(interval,steps,
              type="l",
              col="red",
              main = "Average number of steps taken",
@@ -229,9 +243,9 @@ with(AverageIntervalSteps,{
              ylab="average steps cross all days")
                 
 })
-AverageIntervalStepsNew<-aggregate(NewActivity$steps,by=list(interval=Activity$interval),FUN= mean, na.rm=T)
+AverageIntervalStepsNew<-aggregate(steps~interval,data=NewActivity, mean, na.rm=T)
 with(AverageIntervalStepsNew,{
-        lines(x=interval,y=x, col = "blue", lty ="twodash" )
+        lines(x=interval,y=steps, col = "blue", lty ="twodash" )
 })
 legend("topright", 
        legend = c("Original","Fix Missing Value"), 
@@ -239,10 +253,10 @@ legend("topright",
        lty = c("solid","twodash"),cex=0.8)
 ```
 
-![plot of chunk Task3](figure/Task3-1.png) 
+![plot of chunk Task3.backup](figure/Task3.backup-1.png) 
 
 ```r
-maxInterval<-AverageIntervalStepsNew[AverageIntervalStepsNew$x==max(AverageIntervalStepsNew$x),"interval"]
+maxInterval<-AverageIntervalStepsNew[which.max(AverageIntervalStepsNew$steps),"interval"]
 start<-paste(floor(maxInterval/100),maxInterval%%100,sep = ":")
 end<-paste(floor(maxInterval/100),maxInterval%%100+5,sep = ":")
 ```
@@ -253,11 +267,11 @@ Which is the same as the values estimated with missing values and shows that imp
 - Firstly, plot the data of workdays and weekends together
 
 ```r
-Activity$weekday<-wday(Activity$date,label=T)
-Activity$isWeekends<-Activity$weekday %in% c("Sun","Sat")
+NewActivity$weekday<-wday(NewActivity$date,label=T)
+NewActivity$DayType<-ifelse(NewActivity$weekday %in% c("Sun","Sat"),"weekends","workday")
 AverageIntervalStepsWeekends<-
-        aggregate(Activity$steps,
-                  by=list(isWeekends=Activity$isWeekends,interval=Activity$interval),
+        aggregate(NewActivity$steps,
+                  by=list(DayType=NewActivity$DayType,interval=NewActivity$interval),
                   FUN = mean,
                   na.rm=T)
 library(ggplot2)
@@ -265,64 +279,51 @@ qplot(data=AverageIntervalStepsWeekends,
       x = interval,
       y = x,
       geom="line",
-      col=isWeekends,
+      col=DayType,
       xlab="Interval, Time(hmm/hhmm)",
-      ylab="average steps cross all days")
+      ylab="average steps cross all days")+theme(legend.position = "top")
 ```
 
 ![plot of chunk Task4.Main](figure/Task4.Main-1.png) 
 
-- Secondly, plot the data of workdays and weekends together 
+- Secondly, calculate the compare the mean/median between weekdays and weekends.
 
 ```r
 attach(AverageIntervalStepsWeekends)
+aggregate(x,FUN = mean,by=list(dayType=DayType))
 ```
 
 ```
-## The following objects are masked from AverageIntervalStepsWeekends (pos = 3):
-## 
-##     interval, isWeekends, x
-## 
-## The following object is masked from NewActivity:
-## 
-##     interval
+##    dayType  x
+## 1 weekends 43
+## 2  workday 35
 ```
 
 ```r
-aggregate(x,FUN = mean,by=list(isWeekends=isWeekends))
+aggregate(x,FUN = median,by=list(dayType=DayType))
 ```
 
 ```
-##   isWeekends  x
-## 1      FALSE 35
-## 2       TRUE 43
-```
-
-```r
-aggregate(x,FUN = median,by=list(isWeekends=isWeekends))
-```
-
-```
-##   isWeekends  x
-## 1      FALSE 24
-## 2       TRUE 32
+##    dayType  x
+## 1 weekends 32
+## 2  workday 24
 ```
 
 ```r
 detach(AverageIntervalStepsWeekends)
 ```
 
-We can see that the average steps of weekends if a more than weekdays;  
-And the time series pattern is also different:
-* In the morning(5~10 o' clock), weekend < workdays;
-* In the daylight(10~20 o' clock), weekend > workdays
+We can see that the average steps of weekends is more than weekdays;  
+And the time series pattern is also different:  
+ a. In the morning(5~10 o' clock), weekend < workdays;  
+ b. In the daylight(10~20 o' clock), weekend > workdays;
 
 - Finally, plot the data by weekdays to further understand.
 
 ```r
 AverageIntervalStepsPerWeekday<-
-        aggregate(Activity$steps,
-                  by=list(weekday=Activity$weekday,interval=Activity$interval),
+        aggregate(NewActivity$steps,
+                  by=list(weekday=NewActivity$weekday,interval=NewActivity$interval),
                   FUN = mean,
                   na.rm=T)
 
