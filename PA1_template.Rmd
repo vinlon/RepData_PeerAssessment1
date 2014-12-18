@@ -17,13 +17,13 @@ if(!exists(csvfile)){
      unzip(zipfile = "activity.zip")   
 }
 ```
-- Read the data to the object Activity
+- Read the data to the object Activity  
   before this ,roughly review the data and found there is column headers and has NA value in the "steps" column
 ```{r loaddata}
 Activity<-read.csv(csvfile,header = T)
 str(Activity)
 ```
-- Transform date column to Data format
+- Transform date column to Date format
 ```{r dateconvert}
 library(lubridate)
 attach(Activity)
@@ -47,7 +47,7 @@ unique(Activity$time)
 StepsPerDay<-aggregate(Activity$steps,by = list(Date=Activity$date),FUN = sum,na.rm=T)
 dim(StepsPerDay)
 DailySteps<-StepsPerDay$x
-hist(DailySteps,)
+hist(DailySteps,breaks = 20)
 
 options(digits = 2)
 meanSteps<-mean(DailySteps)
@@ -88,20 +88,28 @@ sum(is.na(Activity$steps))
 - Create a new dataset that is equal to the original dataset but with the missing data filled in.
 ```{r imputeNA,cache=TRUE}
 NewActivity<-Activity
-attach(NewActivity)
-intervalMean<-aggregate(steps,by= list(interval=interval), FUN = mean, na.rm=T)
-for(i in 1:length(steps)){
-        if(is.na(steps[i])){
-                NewActivity$steps[i]<-intervalMean$x[intervalMean$interval==interval[i]]
+
+for(i in 1:length(NewActivity$steps)){
+        if(is.na(NewActivity$steps[i])){
+                NewActivity$steps[i]<-AverageIntervalSteps$x[AverageIntervalSteps$interval==NewActivity$interval[i]]
         }
 }
-detach(NewActivity)
 
-sum(is.na(Activity$steps))
+sum(is.na(NewActivity$steps))
 sum(is.na(NewActivity$steps))
 ```
 - Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
 ```{r Task3, fig.width=5,fig.height=5}
+StepsPerDay_New<-aggregate(NewActivity$steps,by = list(Date=NewActivity$date),FUN = sum,na.rm=T)
+DailySteps_New<-StepsPerDay_New$x
+hist(DailySteps_New,)
+
+options(digits = 2)
+mean(DailySteps_New)
+median(DailySteps_New)
+```
+Keep the wrong plot I had made (which seems interesting ), be carefull next time.
+```{r Task3.backup, fig.width=5,fig.height=5 }
 with(AverageIntervalSteps,{
         plot(interval,x,
              type="l",
@@ -129,11 +137,11 @@ Which is the same as the values estimated with missing values and shows that imp
 ## Task4, Are there differences in activity patterns between weekdays and weekends?
 - Firstly, plot the data of workdays and weekends together
 ```{r Task4.Main, fig.width=6,fig.height=5}
-Activity$weekday<-wday(Activity$date,label=T)
-Activity$isWeekends<-Activity$weekday %in% c("Sun","Sat")
+NewActivity$weekday<-wday(NewActivity$date,label=T)
+NewActivity$dayType<-ifelse(NewActivity$weekday %in% c("Sun","Sat"),"weekends","workday")
 AverageIntervalStepsWeekends<-
-        aggregate(Activity$steps,
-                  by=list(isWeekends=Activity$isWeekends,interval=Activity$interval),
+        aggregate(NewActivity$steps,
+                  by=list(dayType=NewActivity$dayType,interval=NewActivity$interval),
                   FUN = mean,
                   na.rm=T)
 library(ggplot2)
@@ -141,29 +149,29 @@ qplot(data=AverageIntervalStepsWeekends,
       x = interval,
       y = x,
       geom="line",
-      col=isWeekends,
+      col=dayType,
       xlab="Interval, Time(hmm/hhmm)",
       ylab="average steps cross all days")
 ```
 
-- Secondly, plot the data of workdays and weekends together 
+- Secondly, calculate the compare the mean/median between weekdays and weekends.
 ```{r Task4.Summary}
 attach(AverageIntervalStepsWeekends)
-aggregate(x,FUN = mean,by=list(isWeekends=isWeekends))
-aggregate(x,FUN = median,by=list(isWeekends=isWeekends))
+aggregate(x,FUN = mean,by=list(dayType=dayType))
+aggregate(x,FUN = median,by=list(dayType=dayType))
 detach(AverageIntervalStepsWeekends)
 ```
 
-We can see that the average steps of weekends if a more than weekdays;  
-And the time series pattern is also different:
-* In the morning(5~10 o' clock), weekend < workdays;
-* In the daylight(10~20 o' clock), weekend > workdays
+We can see that the average steps of weekends is more than weekdays;  
+And the time series pattern is also different:  
+ a. In the morning(5~10 o' clock), weekend < workdays;  
+ b. In the daylight(10~20 o' clock), weekend > workdays;
 
 - Finally, plot the data by weekdays to further understand.
 ```{r Task4.Extra, fig.width=15,fig.height=3}
 AverageIntervalStepsPerWeekday<-
-        aggregate(Activity$steps,
-                  by=list(weekday=Activity$weekday,interval=Activity$interval),
+        aggregate(NewActivity$steps,
+                  by=list(weekday=NewActivity$weekday,interval=NewActivity$interval),
                   FUN = mean,
                   na.rm=T)
 
