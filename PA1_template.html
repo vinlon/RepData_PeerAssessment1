@@ -469,7 +469,13 @@ AverageIntervalStepsWeekends&lt;-
                   FUN = mean,
                   na.rm=T)
 library(ggplot2)
-qplot(data=AverageIntervalStepsWeekends,
+</code></pre>
+
+<pre><code>## Find out what&#39;s changed in ggplot2 with
+## news(Version == &quot;1.0.0&quot;, package = &quot;ggplot2&quot;)
+</code></pre>
+
+<pre><code class="r">qplot(data=AverageIntervalStepsWeekends,
       x = interval,
       y = x,
       geom=&quot;line&quot;,

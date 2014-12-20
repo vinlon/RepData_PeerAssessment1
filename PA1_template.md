@@ -3,6 +3,7 @@ title: "Reproducible Research: Peer Assessment 1"
 output: 
   html_document:
     keep_md: true
+    rpubs: http://rpubs.com/liwenlong/47993 
 ---
 ## Loading and preprocessing the data
 - set working directory
@@ -270,6 +271,14 @@ AverageIntervalStepsWeekends<-
                   FUN = mean,
                   na.rm=T)
 library(ggplot2)
+```
+
+```
+## Find out what's changed in ggplot2 with
+## news(Version == "1.0.0", package = "ggplot2")
+```
+
+```r
 qplot(data=AverageIntervalStepsWeekends,
       x = interval,
       y = x,
