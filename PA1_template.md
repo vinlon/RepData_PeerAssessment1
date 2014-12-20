@@ -174,13 +174,16 @@ NewActivity<-Activity
 
 for(i in 1:length(NewActivity$steps)){
         if(is.na(NewActivity$steps[i])){
-                NewActivity$steps[i]<-AverageIntervalSteps$x[AverageIntervalSteps$interval==NewActivity$interval[i]]
+                NewActivity$steps[i]<-
+                        AverageIntervalSteps$steps[AverageIntervalSteps$interval==NewActivity$interval[i]]
         }
 }
+
+sum(is.na(NewActivity$steps))
 ```
 
 ```
-## Error in NewActivity$steps[i] <- AverageIntervalSteps$x[AverageIntervalSteps$interval == : 更换参数长度为零
+## [1] 0
 ```
 
 ```r
@@ -188,15 +191,7 @@ sum(is.na(NewActivity$steps))
 ```
 
 ```
-## [1] 2304
-```
-
-```r
-sum(is.na(NewActivity$steps))
-```
-
-```
-## [1] 2304
+## [1] 0
 ```
 - Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
 
@@ -226,7 +221,7 @@ median(DailySteps_New)
 ```
 
 ```
-## [1] 10765
+## [1] 10766
 ```
 Since in the original data, if the data of a day is all NA, the day will be removed from the dataset. 
 So In the imputing histgram, the fix data with average interval steps are added into the most popular bucket.  
@@ -295,8 +290,8 @@ aggregate(x,FUN = mean,by=list(dayType=DayType))
 
 ```
 ##    dayType  x
-## 1 weekends 43
-## 2  workday 35
+## 1 weekends 42
+## 2  workday 36
 ```
 
 ```r
@@ -306,7 +301,7 @@ aggregate(x,FUN = median,by=list(dayType=DayType))
 ```
 ##    dayType  x
 ## 1 weekends 32
-## 2  workday 24
+## 2  workday 26
 ```
 
 ```r

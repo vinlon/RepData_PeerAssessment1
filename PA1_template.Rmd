@@ -94,7 +94,8 @@ NewActivity<-Activity
 
 for(i in 1:length(NewActivity$steps)){
         if(is.na(NewActivity$steps[i])){
-                NewActivity$steps[i]<-AverageIntervalSteps$x[AverageIntervalSteps$interval==NewActivity$interval[i]]
+                NewActivity$steps[i]<-
+                        AverageIntervalSteps$steps[AverageIntervalSteps$interval==NewActivity$interval[i]]
         }
 }
 
